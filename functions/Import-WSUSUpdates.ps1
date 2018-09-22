@@ -23,8 +23,14 @@ function Import-WSUSUpdates
         [string]$ComputerName = $env:COMPUTERNAME,
         #Path where exported files are located
         [Parameter(Mandatory)]
-        [string]$Path,
-        #path of wsuscontent
+        [string]$log,
+        #Path where exported files are located
+        [Parameter(Mandatory)]
+        [string]$xml,
+        #Path where exported files are located
+        [Parameter(Mandatory)]
+        [string]$WSUSSource,
+        #path of target wsuscontent. this shouldn't have the wsuscontent folder in the path. should check for it.
         [Parameter(Mandatory)]
         [string]$WSUSContent
     )
@@ -32,17 +38,11 @@ function Import-WSUSUpdates
     begin
     {        
         $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
-        #$exportdate = get-date -uFormat %m%d%y
-        $exportlog = "$Path\$(Get-ChildItem $Path | where Name -like "*log*")"
-        $exportxml = "$Path\$(Get-ChildItem $Path | where Name -like "*xml*")"
-        #$exportzip = "$Path\$(Get-ChildItem $Path | where Name -like "*zip*")"
-        #$finallog = "$Destination\$exportlog"
-        #$finalzip = "$Destination\$exportzip"
         $WSUSUtil = 'C:\Program Files\Update Services\Tools\WsusUtil.exe'
         $WSUSUtilArgList = @(
             "import",
-            "$exportxml",
-            "$exportlog"
+            "$xml",
+            "$log"
         )
     }
 
@@ -78,7 +78,7 @@ function Import-WSUSUpdates
                 Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
                 try
                 {
-                    Copy-Item -Path "$path\wsuscontent" -Destination $WSUSContent -Recurse -Force
+                    Copy-Item -Path $WSUSSource -Destination $WSUSContent -Recurse -Force
                 }
                 catch
                 {
@@ -87,14 +87,17 @@ function Import-WSUSUpdates
             }
             try
             {
-                #Set-Location -Path 'C:\Program Files\Update Services\Tools'
+                Write-PSFMessage -Message "Starting import of WSUS Metadata" -Level Important
                 $ImportProcess = & $WSUSUtil $WSUSUtilArgList
-                #Export-PSWSUSMetaData -FileName $finalzip -LogName $finallog -Verbose -ErrorAction stop
-                #$outputvariable
                 $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop
                 if($WSUSUtilout -like "*success*")
                 {
                     Write-PSFMessage -Message "Import was successful" -Level Important
+                }
+                else
+                {
+                    $WSUSUtilError = $ImportProcess
+                    throw $WSUSUtilError
                 }
             }
             catch
