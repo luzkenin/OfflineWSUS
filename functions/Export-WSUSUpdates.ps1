@@ -64,8 +64,6 @@ function Export-WSUSUpdates
         try
         {
             Export-PSWSUSMetaData -FileName $finalzip -LogName $finallog -Verbose -ErrorAction stop
-            #$outputvariable
-            #$WSUSUtilout = Select-String -Pattern "successfully exported" -InputObject $outputvariable -ErrorAction Stop
         }
         catch
         {
@@ -86,7 +84,6 @@ function Export-WSUSUpdates
             Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
             try
             {
-                #Get-ChildItem $WSUSContent | Compress-Archive -DestinationPath "$Destination\WSUSContent.zip" -CompressionLevel NoCompression
                 Copy-Item -Path $WSUSContent -Destination $Destination -Recurse
             }
             catch
@@ -94,24 +91,6 @@ function Export-WSUSUpdates
 
             }
         }
-        <#
-        if($finalzip | Test-Path)
-        {
-            Write-verbose "Metadata export complete" $ExportSuccess = $true
-        }
-        else
-        {
-            Write-Verbose "$exportzip and $exportlog are missing. Export probably failed."
-            Write-Error "Something went wrong with the export"
-        }
-        #Copy
-        if($ExportSuccess)
-        {
-            Write-Verbose "Starting copy of Windows Updates to $Destination"
-            copy-Items - Source c:\wsus - Destination $Destination
-            $approved | Export-Csv "$Destination approved$exportdate.csv" -NoTypeInformation
-        }
-        #>
     }
 
     end {
