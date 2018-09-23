@@ -67,7 +67,7 @@ function Export-WSUSUpdates {
             }
         }
         try {
-            Export-PSWSUSMetaData -FileName $finalzip -LogName $finallog -Verbose -ErrorAction stop
+            Export-PSWSUSMetaData -FileName $finalzip -LogName $finallog -ErrorAction stop
         }
         catch {
             Stop-PSFFunction -Message "Could not export metadata" -ErrorRecord $_ -Continue
