@@ -1,5 +1,4 @@
-function Export-WSUSUpdates
-{
+function Export-WSUSUpdates {
     <#
     .SYNOPSIS
     Exports WSUS update metadata and binaries from a server.
@@ -91,13 +90,12 @@ function Export-WSUSUpdates
                 return
             }
         }
-    }
-
-    [pscsutomobject]@{
-        ComputerName = $ComputerName
-        Action       = "Export"
-        Result       = "Success" # can you add record numbers or any other useful info?
-        Size         = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
-        Count        = $FileInfo.count
+        [pscsutomobject]@{
+            ComputerName = $ComputerName
+            Action       = "Export"
+            Result       = "Success" # can you add record numbers or any other useful info?
+            Size         = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
+            Count        = $FileInfo.count
+        }
     }
 }
