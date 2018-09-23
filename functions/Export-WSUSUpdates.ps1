@@ -97,7 +97,7 @@ function Export-WSUSUpdates
         ComputerName = $ComputerName
         Action       = "Export"
         Result       = "Success" # can you add record numbers or any other useful info?
-        Size         = ""(($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB) GB""
+        Size         = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
         Count        = $FileInfo.count
     }
 }
