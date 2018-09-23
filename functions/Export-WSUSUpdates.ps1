@@ -77,9 +77,7 @@ function Export-WSUSUpdates {
             $service.Start()
             $service.WaitForStatus('Running','00:00:20')
         }
-        else {
-            #nothing yet
-        }
+
         if($WSUSContent) {
             Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
             try {
