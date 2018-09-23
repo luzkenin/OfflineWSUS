@@ -1,7 +1,7 @@
 function Import-WSUSUpdates {
     <#
     .SYNOPSIS
-    Imports WSUS update metadata to a server.
+    Imports WSUS update metadata and binaries to a server.
     
     .DESCRIPTION
     Imports update metadata to a server from an export package file created on another WSUS server. 
