@@ -1,11 +1,37 @@
-function Import-WSUSUpdates
-{
+function Import-WSUSUpdates {
     <#
     .SYNOPSIS
-
+    Imports WSUS update metadata to a server.
+    
     .DESCRIPTION
+    Imports update metadata to a server from an export package file created on another WSUS server. 
+    This synchronizes the destination WSUS server without using a network connection.
+    
+    See https://docs.microsoft.com/de-de/security-updates/windowsupdateservices/18127395 for more information.
+    
+    .PARAMETER ComputerName
+        The target computer that will perform the import. Defaults to localhost.
+    
+    .PARAMETER LogFile
+         The path and file name of the log file.
+    
+    .PARAMETER Xml
+        Path to the import approval metadata Xml.
 
-    .PARAMETER
+    .PARAMETER ContentSource
+        Path of source wsuscontent (if they pass the wsuscontent folder in the path, auto strip it?)
+
+    .PARAMETER ContentDestination
+        Path of destination wsuscontent. Why is this beneficial? I don't use the product, 
+        have no idea and would like to know. So would be good to include in help.
+    
+    .PARAMETER WsusUtilPath
+        The path to wsusutil.exe. Defaults to "C:\Program Files\Update Services\Tools\WsusUtil.exe"
+    
+    .PARAMETER EnableException
+        By default, when something goes wrong we try to catch it, interpret it and give you a friendly warning message.
+        This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
+        Using this switch turns this "nice by default" feature off and enables you to catch exceptions with your own try/catch.
 
     .INPUTS
 
@@ -18,105 +44,90 @@ function Import-WSUSUpdates
     #>
     [CmdletBinding()]
     param (
-        # Parameter help description
-        [Parameter()]
         [string]$ComputerName = $env:COMPUTERNAME,
-        #Path where exported files are located
         [Parameter(Mandatory)]
-        [string]$log,
-        #Path where exported files are located
+        [string]$LogFile,
         [Parameter(Mandatory)]
-        [string]$xml,
-        #Path where exported files are located
+        [string]$Xml,
         [Parameter(Mandatory)]
-        [string]$WSUSSource,
-        #path of target wsuscontent. this shouldn't have the wsuscontent folder in the path. should check for it.
+        [string]$ContentSource,
         [Parameter(Mandatory)]
-        [string]$WSUSContent
+        [string]$ContentDestination,
+        [string]$WsusUtilPath = "C:\Program Files\Update Services\Tools\WsusUtil.exe",
+        [switch]$EnableException
     )
-
-    begin
-    {        
+    
+    begin {
         $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
-        $WSUSUtil = 'C:\Program Files\Update Services\Tools\WsusUtil.exe'
         $WSUSUtilArgList = @(
             "import",
-            "$xml",
-            "$log"
+            "$Xml",
+            "$LogFile"
         )
     }
-
-    process
-    {
-        $Connected = Get-PSWSUSServer
-        if($null -eq $Connected)
-        {
-            Write-PSFMessage -Message "PoshWSUS not loaded" -Level Warning
-            throw
+    
+    process {
+        if (-not (Get-PSWSUSServer)) {
+            # Module is imported automatically because of psd1. 
+            Stop-PSFFunction -Message "No server specified or something. Do this to fix."
+            return
         }
-        #export
+        
+        if (-not (Test-Path $WsusUtilPath)) {
+            Stop-PSFFunction -Message "$WsusUtilPath does not exist"
+            return
+        }
+        
         Write-PSFMessage -Message "Starting import" -Level Important
-        if ($service.Status -ne "Stopped")
-        {
+        
+        if ($service.Status -ne "Stopped") {
             Write-PSFMessage -Message "Stopping $($service.DisplayName) service on $computername" -Level Important
             $service.Stop()
-            $service.WaitForStatus('Stopped','00:00:20')
-            if ($service.Status -eq "Stopped")
-            {
+            $service.WaitForStatus('Stopped', '00:00:20')
+            if ($service.Status -eq "Stopped") {
                 Write-PSFMessage -Message "$($service.DisplayName) is now $($service.Status)" -Level Important
             }
-            else
-            {
-                Write-PSFMessage -Message "Could not stop $($service.DisplayName)" -Level Warning
-                throw
+            else {
+                Stop-PSFFunction -Message "Could not stop $($service.DisplayName)" -Continue
             }
         }
-        if ($service.Status -eq "Stopped")
-        {
-            if($WSUSContent)
-            {
+        if ($service.Status -eq "Stopped") {
+            if ($ContentDestination) {
                 Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
-                try
-                {
-                    Copy-Item -Path $WSUSSource -Destination $WSUSContent -Recurse -Force
+                try {
+                    Copy-Item -Path $ContentSource -Destination $ContentDestination -Recurse -Force -ErrorAction Stop
                 }
-                catch
-                {
-
+                catch {
+                    Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
                 }
             }
-            try
-            {
+            try {
                 Write-PSFMessage -Message "Starting import of WSUS Metadata" -Level Important
-                $ImportProcess = & $WSUSUtil $WSUSUtilArgList
+                $ImportProcess = & $WsusUtilPath $WSUSUtilArgList
                 $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop
-                if($WSUSUtilout -like "*success*")
-                {
+                if ($WSUSUtilout -like "*success*") {
                     Write-PSFMessage -Message "Import was successful" -Level Important
                 }
-                else
-                {
-                    $WSUSUtilError = $ImportProcess
-                    throw $WSUSUtilError
+                else {
+                    Stop-PSFFunction -Message "$ImportProcess" -Continue
                 }
             }
-            catch
-            {
+            catch {
                 Write-PSFMessage -Message "Could not import metadata" -Level Warning -ErrorRecord $_
             }
-            if ($service.Status -ne "Running")
-            {
+            if ($service.Status -ne "Running") {
                 Write-PSFMessage -Message "Starting $($service.DisplayName) service on $computername" -Level Important
                 $service.Start()
-                $service.WaitForStatus('Running','00:00:30')
+                $service.WaitForStatus('Running', '00:00:30')
             }
-            else
-            {
-                #nothing yet
+            else {
+                Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
             }
         }
-    }
-
-    end {
+        [pscsutomobject]@{
+            ComputerName = $ComputerName
+            Action       = "Import"
+            Result       = "Success" # can you add record numbers or any other useful info?
+        }
     }
 }
