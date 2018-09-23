@@ -67,9 +67,9 @@ function Import-WSUSUpdates {
     }
     
     process {
-        if (-not (Get-PSWSUSServer)) {
+        if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
             # Module is imported automatically because of psd1. 
-            Stop-PSFFunction -Message "No server specified or something. Do this to fix."
+            Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server"
             return
         }
         
@@ -102,7 +102,7 @@ function Import-WSUSUpdates {
                 }
             }
             try {
-                Write-PSFMessage -Message "Starting import of WSUS Metadata" -Level Important
+                Write-PSFMessage -Message "Starting import of WSUS Metadata, this will take a while." -Level Important
                 $ImportProcess = & $WsusUtilPath $WSUSUtilArgList
                 $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop
                 if ($WSUSUtilout -like "*success*") {
@@ -118,7 +118,7 @@ function Import-WSUSUpdates {
             if ($service.Status -ne "Running") {
                 Write-PSFMessage -Message "Starting $($service.DisplayName) service on $computername" -Level Important
                 $service.Start()
-                $service.WaitForStatus('Running', '00:00:30')
+                $service.WaitForStatus('Running', '00:00:60')
             }
             else {
                 Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
