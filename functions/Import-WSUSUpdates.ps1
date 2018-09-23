@@ -124,7 +124,7 @@ function Import-WSUSUpdates {
                 Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
             }
         }
-        [pscsutomobject]@{
+        [pscustomobject]@{
             ComputerName = $ComputerName
             Action       = "Import"
             Result       = "Success" # can you add record numbers or any other useful info?

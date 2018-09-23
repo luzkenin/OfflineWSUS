@@ -90,7 +90,7 @@ function Export-WSUSUpdates {
                 return
             }
         }
-        [pscsutomobject]@{
+        [pscustomobject]@{
             ComputerName = $ComputerName
             Action       = "Export"
             Result       = "Success" # can you add record numbers or any other useful info?
