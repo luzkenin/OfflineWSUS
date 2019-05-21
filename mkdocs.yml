@@ -1,0 +1,9 @@
+site_name: OfflineWSUS
+repo_url: https://github.com/luzkenin/OfflineWSUS
+theme: readthedocs
+pages:
+  - Home: index.md
+  - OfflineWSUS Basics:
+    - What is OfflineWSUS: about.md
+    - Quick Start: Quick-Start-Installation-and-Example.md
+  - Acknowledgements: acknowledgements.md

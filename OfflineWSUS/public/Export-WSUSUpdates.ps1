@@ -38,6 +38,9 @@ function Export-WSUSUpdates {
     )
 
     begin {
+    }
+
+    process {
         $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
         $exportdate = get-date -uFormat %m%d%y
         $exportlog = "$exportdate.log"
@@ -45,9 +48,7 @@ function Export-WSUSUpdates {
         $finallog = "$Destination\$exportlog"
         $finalzip = "$Destination\$exportzip"
         $FileInfo = Get-ChildItem -Path $WSUSContent -Recurse
-    }
 
-    process {
         if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
             # Module is imported automatically because of psd1. 
             Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server"
