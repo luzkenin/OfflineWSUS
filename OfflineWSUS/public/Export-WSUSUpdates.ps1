@@ -41,7 +41,7 @@ function Export-WSUSUpdates {
     }
 
     process {
-        $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
+        $service = Get-Service -ComputerName $ComputerName -name "WsusService" -ErrorAction SilentlyContinue
         $exportdate = get-date -uFormat %m%d%y
         $exportlog = "$exportdate.log"
         $exportzip = "$exportdate.xml.gz"
@@ -59,42 +59,48 @@ function Export-WSUSUpdates {
         if ($service.Status -ne "Stopped") {
             Write-PSFMessage -Message "Stopping $($service.DisplayName) service on $computername" -Level Important
             $service.Stop()
-            $service.WaitForStatus('Stopped','00:00:20')
+            $service.WaitForStatus('Stopped', '00:00:20')
             if ($service.Status -eq "Stopped") {
                 Write-PSFMessage -Message "$($service.DisplayName) is now $($service.Status)" -Level Important
             }
             else {
-                Stop-PSFFunction -Message "Could not stop $($service.DisplayName)" -ErrorRecord $_ -Continue
+                Stop-PSFFunction -Message "Could not stop $($service.DisplayName)" -ErrorRecord $_
+                $Result = "Could not stop $($service.DisplayName)"
             }
         }
         try {
             Export-PSWSUSMetaData -FileName $finalzip -LogName $finallog -ErrorAction stop
         }
         catch {
-            Stop-PSFFunction -Message "Could not export metadata" -ErrorRecord $_ -Continue
+            Stop-PSFFunction -Message "Could not export metadata" -ErrorRecord $_
+            $Result = "Export failed"
         }
         if ($service.Status -ne "Running") {
             Write-PSFMessage -Message "Starting $($service.DisplayName) service on $computername" -Level Important
             $service.Start()
-            $service.WaitForStatus('Running','00:00:20')
+            $service.WaitForStatus('Running', '00:00:20')
         }
 
-        if($WSUSContent) {
+        if ($WSUSContent) {
             Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
             try {
                 Copy-Item -Path $WSUSContent -Destination $Destination -Recurse -ErrorAction Stop
             }
             catch {
                 Stop-PSFFunction -Message "Could not copy all files" -ErrorRecord $_
+                $Result = "Could not copy all files"
                 return
             }
         }
         [pscustomobject]@{
             ComputerName = $ComputerName
             Action       = "Export"
-            Result       = "Success" # can you add record numbers or any other useful info?
-            Size         = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
-            Count        = $FileInfo.count
+            Result       = $Result # can you add record numbers or any other useful info?
+            TotalSize    = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB) + "GB"
+            FileCount    = $FileInfo.count
+            Destination  = $Destination
+            Source       = $WSUSContent
+
         }
     }
 }

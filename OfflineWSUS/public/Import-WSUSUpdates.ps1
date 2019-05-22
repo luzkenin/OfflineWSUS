@@ -2,19 +2,19 @@ function Import-WSUSUpdates {
     <#
     .SYNOPSIS
     Imports WSUS update metadata and binaries to a server.
-    
+
     .DESCRIPTION
-    Imports update metadata to a server from an export package file created on another WSUS server. 
+    Imports update metadata to a server from an export package file created on another WSUS server.
     This synchronizes the destination WSUS server without using a network connection.
-    
+
     See https://docs.microsoft.com/de-de/security-updates/windowsupdateservices/18127395 for more information.
-    
+
     .PARAMETER ComputerName
         The target computer that will perform the import. Defaults to localhost.
-    
+
     .PARAMETER LogFile
          The path and file name of the log file.
-    
+
     .PARAMETER Xml
         Path to the import approval metadata Xml.
 
@@ -22,12 +22,12 @@ function Import-WSUSUpdates {
         Path of source wsuscontent (if they pass the wsuscontent folder in the path, auto strip it?)
 
     .PARAMETER ContentDestination
-        Path of destination wsuscontent. Why is this beneficial? I don't use the product, 
+        Path of destination wsuscontent. Why is this beneficial? I don't use the product,
         have no idea and would like to know. So would be good to include in help.
-    
+
     .PARAMETER WsusUtilPath
         The path to wsusutil.exe. Defaults to "C:\Program Files\Update Services\Tools\WsusUtil.exe"
-    
+
     .PARAMETER EnableException
         By default, when something goes wrong we try to catch it, interpret it and give you a friendly warning message.
         This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
@@ -56,7 +56,7 @@ function Import-WSUSUpdates {
         [string]$WsusUtilPath = "C:\Program Files\Update Services\Tools\WsusUtil.exe",
         [switch]$EnableException
     )
-    
+
     begin {
         $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
         $WSUSUtilArgList = @(
@@ -65,21 +65,21 @@ function Import-WSUSUpdates {
             "$LogFile"
         )
     }
-    
+
     process {
         if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
-            # Module is imported automatically because of psd1. 
+            # Module is imported automatically because of psd1.
             Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server"
             return
         }
-        
+
         if (-not (Test-Path $WsusUtilPath)) {
             Stop-PSFFunction -Message "$WsusUtilPath does not exist"
             return
         }
-        
+
         Write-PSFMessage -Message "Starting import" -Level Important
-        
+
         if ($service.Status -ne "Stopped") {
             Write-PSFMessage -Message "Stopping $($service.DisplayName) service on $computername" -Level Important
             $service.Stop()
@@ -128,6 +128,7 @@ function Import-WSUSUpdates {
             ComputerName = $ComputerName
             Action       = "Import"
             Result       = "Success" # can you add record numbers or any other useful info?
+            Count        = $count
         }
     }
 }

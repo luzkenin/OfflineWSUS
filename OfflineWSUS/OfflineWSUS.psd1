@@ -10,7 +10,7 @@
     CompanyName       = 'Unknown'
     Copyright         = '(c) Joseph Warren. All rights reserved.'
     Description       = ''
-    FunctionsToExport = @()
+    FunctionsToExport = '*'
     CmdletsToExport   = @()
     VariablesToExport = @()
     AliasesToExport   = @()
