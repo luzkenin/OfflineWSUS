@@ -28,11 +28,6 @@ function Import-WSUSUpdates {
     .PARAMETER WsusUtilPath
         The path to wsusutil.exe. Defaults to "C:\Program Files\Update Services\Tools\WsusUtil.exe"
 
-    .PARAMETER EnableException
-        By default, when something goes wrong we try to catch it, interpret it and give you a friendly warning message.
-        This avoids overwhelming you with "sea of red" exceptions, but is inconvenient because it basically disables advanced scripting.
-        Using this switch turns this "nice by default" feature off and enables you to catch exceptions with your own try/catch.
-
     .INPUTS
 
     .OUTPUTS
@@ -46,27 +41,32 @@ function Import-WSUSUpdates {
     param (
         [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter(Mandatory)]
-        [string]$LogFile,
+        [string]$LogFile, #get rid of this. Want to find this with code
         [Parameter(Mandatory)]
-        [string]$Xml,
+        [string]$Xml, #get rid of this. Want to find this with code
         [Parameter(Mandatory)]
-        [string]$ContentSource,
+        [string]$ContentSource, #get rid of this. Want to find this with code
         [Parameter(Mandatory)]
-        [string]$ContentDestination,
-        [string]$WsusUtilPath = "C:\Program Files\Update Services\Tools\WsusUtil.exe",
-        [switch]$EnableException
+        [string]$ContentDestination, #possible to find this from registry
+        [Parameter(Mandatory)]
+        [string]$WsusUtilPath = "C:\Program Files\Update Services\Tools\WsusUtil.exe", #possible to find this from registry
+        [Parameter(Mandatory)]
+        $source # this will point to root of the export folder
+        #HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Update Services\Server\Setup
     )
 
     begin {
+        
+    }
+
+    process {
+        $WSUSSetup = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Update Services\Server\Setup"
         $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
         $WSUSUtilArgList = @(
             "import",
             "$Xml",
             "$LogFile"
         )
-    }
-
-    process {
         if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
             # Module is imported automatically because of psd1.
             Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server"
@@ -74,6 +74,7 @@ function Import-WSUSUpdates {
         }
 
         if (-not (Test-Path $WsusUtilPath)) {
+            ############################################################################################################################
             Stop-PSFFunction -Message "$WsusUtilPath does not exist"
             return
         }
@@ -95,7 +96,7 @@ function Import-WSUSUpdates {
             if ($ContentDestination) {
                 Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
                 try {
-                    Copy-Item -Path $ContentSource -Destination $ContentDestination -Recurse -Force -ErrorAction Stop
+                    Copy-Item -Path $ContentSource -Destination ($WSUSSetup.ContentDir + "\wsuscontent") -Recurse -Force -ErrorAction Stop
                 }
                 catch {
                     Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
@@ -103,8 +104,8 @@ function Import-WSUSUpdates {
             }
             try {
                 Write-PSFMessage -Message "Starting import of WSUS Metadata, this will take a while." -Level Important
-                $ImportProcess = & $WsusUtilPath $WSUSUtilArgList
-                $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop
+                $ImportProcess = & $WsusUtilPath $WSUSUtilArgList############################################################################################################################
+                $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop############################################################################################################################
                 if ($WSUSUtilout -like "*success*") {
                     Write-PSFMessage -Message "Import was successful" -Level Important
                 }
@@ -127,8 +128,8 @@ function Import-WSUSUpdates {
         [pscustomobject]@{
             ComputerName = $ComputerName
             Action       = "Import"
-            Result       = "Success" # can you add record numbers or any other useful info?
-            Count        = $count
+            Result       = "Success" # can you add record numbers or any other useful info?############################################################################################################################
+            Count        = $count############################################################################################################################
         }
     }
 }
