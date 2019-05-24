@@ -39,29 +39,23 @@ function Import-WSUSUpdates {
     #>
     [CmdletBinding()]
     param (
+        [Parameter()]
         [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter(Mandatory)]
-        [string]$LogFile, #get rid of this. Want to find this with code
-        [Parameter(Mandatory)]
-        [string]$Xml, #get rid of this. Want to find this with code
-        [Parameter(Mandatory)]
-        [string]$ContentSource, #get rid of this. Want to find this with code
-        [Parameter(Mandatory)]
-        [string]$ContentDestination, #possible to find this from registry
-        [Parameter(Mandatory)]
-        [string]$WsusUtilPath = "C:\Program Files\Update Services\Tools\WsusUtil.exe", #possible to find this from registry
-        [Parameter(Mandatory)]
-        $source # this will point to root of the export folder
-        #HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Update Services\Server\Setup
+        [string]$Source
     )
 
     begin {
-        
     }
 
     process {
         $WSUSSetup = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Update Services\Server\Setup"
+        $ContentDestination = ($WSUSSetup.ContentDir + "\wsuscontent")
+        $WsusUtilPath = ($WSUSSetup.TargetDir + "Tools\WsusUtil.exe")
+        $Xml = Get-ChildItem -Path $Source | where name -like "*.xml.gz" | select -ExpandProperty FullName
+        $LogFile = Get-ChildItem -Path $Source | where name -like "*.log" | select -ExpandProperty FullName
         $service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
+        $Exclude = Get-ChildItem -recurse $ContentDestination
         $WSUSUtilArgList = @(
             "import",
             "$Xml",
@@ -93,10 +87,10 @@ function Import-WSUSUpdates {
             }
         }
         if ($service.Status -eq "Stopped") {
-            if ($ContentDestination) {
+            if (Test-Path -Path $ContentDestination) {
                 Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
                 try {
-                    Copy-Item -Path $ContentSource -Destination ($WSUSSetup.ContentDir + "\wsuscontent") -Recurse -Force -ErrorAction Stop
+                    Copy-Item -Path "$Source\WsusContent\*" -Destination $ContentDestination -Recurse -Force -Exclude $Exclude -ErrorAction Stop
                 }
                 catch {
                     Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
@@ -104,8 +98,8 @@ function Import-WSUSUpdates {
             }
             try {
                 Write-PSFMessage -Message "Starting import of WSUS Metadata, this will take a while." -Level Important
-                $ImportProcess = & $WsusUtilPath $WSUSUtilArgList############################################################################################################################
-                $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop############################################################################################################################
+                $ImportProcess = & $WsusUtilPath $WSUSUtilArgList
+                $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop
                 if ($WSUSUtilout -like "*success*") {
                     Write-PSFMessage -Message "Import was successful" -Level Important
                 }
