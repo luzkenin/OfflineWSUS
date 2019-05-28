@@ -32,9 +32,11 @@ function Export-WSUSUpdates {
         [Parameter()]
         [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter(Mandatory)]
-        [string]$WSUSContent,
-        [Parameter(Mandatory)]
-        [string]$Destination
+        [string]$Destination,
+        # Parameter help description
+        [Parameter()]
+        [switch]
+        $ExportApprovalStatus
     )
 
     begin {
@@ -91,6 +93,9 @@ function Export-WSUSUpdates {
                 $Result = "Could not copy all files"
                 return
             }
+        }
+        if ($ExportApprovalStatus) {
+            #Get-PSWSUSUpdateApproval | Export-Csv -Path $Destination\ApprovalStatus.csv -NoTypeInformation
         }
         [pscustomobject]@{
             ComputerName = $ComputerName

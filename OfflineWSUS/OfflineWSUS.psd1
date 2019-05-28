@@ -21,7 +21,7 @@
     # DotNetFrameworkVersion = ''
     # CLRVersion = ''
     # ProcessorArchitecture = ''
-    # RequiredModules = @()
+    RequiredModules   = @("PoshWSUS")
     # RequiredAssemblies = @()
     # ScriptsToProcess = @()
     # TypesToProcess = @()
