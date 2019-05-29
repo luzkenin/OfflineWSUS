@@ -1,5 +1,5 @@
 function Import-ApprovalStatus {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         # Parameter help description
         [Parameter(Mandatory)]

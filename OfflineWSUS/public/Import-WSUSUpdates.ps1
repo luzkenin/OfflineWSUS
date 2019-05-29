@@ -18,8 +18,8 @@ function Import-WSUSUpdates {
     .PARAMETER Xml
         Path to the import approval metadata Xml.
 
-    .PARAMETER ContentSource
-        Path of source wsuscontent (if they pass the wsuscontent folder in the path, auto strip it?)
+    .PARAMETER ContentPath
+        Path of Path wsuscontent (if they pass the wsuscontent folder in the path, auto strip it?)
 
     .PARAMETER ContentDestination
         Path of destination wsuscontent. Why is this beneficial? I don't use the product,
@@ -49,13 +49,13 @@ import <package> <log file>  <package>:          Path and filename of the packag
         $ComputerName = $env:ComputerName,
         [Parameter(Mandatory)]
         [System.IO.FileInfo]
-        $Source,
+        $Path,
         [Parameter()]
         [string]
-        $Xml = (Get-ChildItem -Path $Source | where name -like "*.xml.gz" | select -ExpandProperty FullName),
+        $Xml = (Get-ChildItem -Path $Path | where name -like "*.xml.gz" | select -ExpandProperty FullName),
         [Parameter()]
         [string]
-        $LogFile = (Get-ChildItem -Path $Source | where name -like "*.log" | select -ExpandProperty FullName),
+        $LogFile = (Get-ChildItem -Path $Path | where name -like "*.log" | select -ExpandProperty FullName),
         [Parameter()]
         [switch]
         $ImportApprovalStatus
@@ -68,7 +68,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
     process {
         #Getting WSUS info
         $WSUSSetup = Get-WSUSSetupInfo -ComputerName $ComputerName
-        $SourceFileCount = Get-ChildItem -Path $Source -File -Recurse | Measure-Object | % { $_.Count }
+        $PathFileCount = Get-ChildItem -Path $Path -File -Recurse | Measure-Object | % { $_.Count }
         $Exclude = Get-ChildItem -recurse $WSUSSetup.WSUSContentPath
         $Service = Get-Service -Name "WsusService" -ErrorAction SilentlyContinue
         $WSUSUtilArgList = @(
@@ -109,7 +109,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
 
         Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
         try {
-            Copy-Item -Path "$Source\wsuscontent\*" -Destination $WSUSSetup.WSUSContentPath -Recurse -Force -Exclude $Exclude -ErrorAction Stop
+            Copy-Item -Path "$Path\wsuscontent\*" -Destination $WSUSSetup.WSUSContentPath -Recurse -Force -Exclude $Exclude -ErrorAction Stop
         }
         catch {
             Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -EnableException $true###############################################
@@ -151,7 +151,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
 
         if ($ImportApprovalStatus) {
             Write-PSFMessage -Message "Importing update approval status." -Level Important
-            $ApprovalStatus = Import-CSV -Path (Get-ChildItem -Path $Source | where name -like "*.csv" | select -ExpandProperty FullName)
+            $ApprovalStatus = Import-CSV -Path (Get-ChildItem -Path $Path | where name -like "*.csv" | select -ExpandProperty FullName)
             $ApprovalStatus | where action -eq "Install" | Approve-PSWSUSUpdate
             $ApprovalStatus | where action -eq "NotApproved" | Deny-WsusUpdate
         }
@@ -160,7 +160,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
             ComputerName    = $ComputerName
             Action          = "Import"
             Result          = "Success" # can you add record numbers or any other useful info?############################################################################################################################
-            FileCount       = $SourceFileCount############################################################################################################################
+            FileCount       = $PathFileCount############################################################################################################################
             ElapsedTIme     = [math]::Round($scriptelapsed.Elapsed.TotalSeconds, 2)
             ObjectsImported = $null
         }
@@ -209,8 +209,8 @@ import <package> <log file>  <package>:          Path and filename of the packag
         #$WSUSSetup = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Update Services\Server\Setup"
         #$ContentDestination = ($WSUSSetup.ContentDir + "\wsuscontent")
         ##$WsusUtilPath = ($WSUSSetup.TargetDir + "Tools\WsusUtil.exe")
-        #$Xml = Get-ChildItem -Path $Source | where name -like "*.xml.gz" | select -ExpandProperty FullName
-        #$LogFile = Get-ChildItem -Path $Source | where name -like "*.log" | select -ExpandProperty FullName
+        #$Xml = Get-ChildItem -Path $Path | where name -like "*.xml.gz" | select -ExpandProperty FullName
+        #$LogFile = Get-ChildItem -Path $Path | where name -like "*.log" | select -ExpandProperty FullName
         #$Service = Get-Service -ComputerName $ComputerName -name WsusService -ErrorAction SilentlyContinue
         #$Exclude = Get-ChildItem -recurse $ContentDestination
         #$WSUSUtilArgList = @(
@@ -244,7 +244,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
             if (Test-Path -Path $ContentDestination) {
                 Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
                 try {
-                    Copy-Item -Path "$Source\WsusContent\*" -Destination $ContentDestination -Recurse -Force -Exclude $Exclude -ErrorAction Stop
+                    Copy-Item -Path "$Path\WsusContent\*" -Destination $ContentDestination -Recurse -Force -Exclude $Exclude -ErrorAction Stop
                 }
                 catch {
                     Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -EnableException
@@ -271,7 +271,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
                 Stop-PSFFunction -Message "Failure" -ErrorRecord $_ -Continue
             }
             if ($ImportApprovalStatus) {
-                $ApprovalStatus = Import-CSV -Path (Get-ChildItem -Path $Source | where name -like "*.csv" | select -ExpandProperty FullName)
+                $ApprovalStatus = Import-CSV -Path (Get-ChildItem -Path $Path | where name -like "*.csv" | select -ExpandProperty FullName)
                 $ApprovalStatus | where action -eq "Install" | Approve-PSWSUSUpdate
                 $ApprovalStatus | where action -eq "NotApproved" | Deny-WsusUpdate
 
