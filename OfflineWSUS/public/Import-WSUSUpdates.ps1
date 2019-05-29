@@ -1,7 +1,7 @@
 function Import-WSUSUpdates {
     <#
     .SYNOPSIS
-    Imports WSUS update metadata and binaries to a server.
+    Imports WSUS update metadata, binaries, and approval status to a server.
 
     .DESCRIPTION
     Imports update metadata to a server from an export package file created on another WSUS server.
@@ -18,25 +18,14 @@ function Import-WSUSUpdates {
     .PARAMETER Xml
         Path to the import approval metadata Xml.
 
-    .PARAMETER ContentPath
-        Path of Path wsuscontent (if they pass the wsuscontent folder in the path, auto strip it?)
-
-    .PARAMETER ContentDestination
-        Path of destination wsuscontent. Why is this beneficial? I don't use the product,
-        have no idea and would like to know. So would be good to include in help.
-
     .INPUTS
 
     .OUTPUTS
-    WARNING: [14:22:31][Import-WSUSUpdates] Incomplete or invalid parameters specified. See below for correct format and
-options:   Imports update metadata (but not content files, approvals, or server settings) to this server from an export
- package file created on another WSUS server. This synchronizes this WSUS server without using a network connection.
-import <package> <log file>  <package>:          Path and filename of the package CAB file (or GZIP file with an
-.xml.gz      extension) to import     <log file>:       Path and filename of the log file to create
 
     .EXAMPLE
 
     .LINK
+    https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395
 
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
@@ -45,6 +34,7 @@ import <package> <log file>  <package>:          Path and filename of the packag
         [string]
         $ComputerName = $env:ComputerName,
         [Parameter(Mandatory)]
+        [ValidateScript( { Test-Path -Path $_ })]
         [System.IO.FileInfo]
         $Path,
         [Parameter()]
@@ -55,7 +45,10 @@ import <package> <log file>  <package>:          Path and filename of the packag
         $LogFile = (Get-ChildItem -Path $Path | where name -like "*.log" | select -ExpandProperty FullName),
         [Parameter()]
         [switch]
-        $ImportApprovalStatus
+        $ImportApprovalStatus,
+        [Parameter()]
+        [switch]
+        $ImportDeclinedStatus
     )
 
     begin {
@@ -120,7 +113,11 @@ import <package> <log file>  <package>:          Path and filename of the packag
 
         if ($PSCmdlet.ShouldProcess("Importing WSUS Metadata")) {
             Write-PSFMessage -Message "Starting import of WSUS Metadata, this will take a while." -Level Important
-
+            <#WARNING: [14:22:31][Import-WSUSUpdates] Incomplete or invalid parameters specified. See below for correct format and
+            options:   Imports update metadata (but not content files, approvals, or server settings) to this server from an export
+            package file created on another WSUS server. This synchronizes this WSUS server without using a network connection.
+            import <package> <log file>  <package>:          Path and filename of the package CAB file (or GZIP file with an
+            .xml.gz      extension) to import     <log file>:       Path and filename of the log file to create#>
             try {
                 $ImportProcess = & $WSUSSetup.WSUSUtilPath $WSUSUtilArgList #| Out-Null
                 $WSUSUtilout = Select-String -Pattern "successfully imported" -InputObject $ImportProcess -ErrorAction Stop
@@ -136,11 +133,9 @@ import <package> <log file>  <package>:          Path and filename of the packag
                 }#>
             }
             catch {
-                #Write-PSFMessage -Message "Could not import metadata" -Level Critical -ErrorRecord $_
                 Stop-PSFFunction -Message "Could not import metadata" -ErrorRecord $_ -EnableException $true
             }
         }
-
 
         if ($PSCmdlet.ShouldProcess("Starting WSUS Service")) {
             Write-PSFMessage -Message "Starting $($Service.DisplayName) service on $ComputerName" -Level Important
@@ -161,7 +156,6 @@ import <package> <log file>  <package>:          Path and filename of the packag
             }
         }
 
-
         if ($ImportApprovalStatus) {
             if ($PSCmdlet.ShouldProcess("Importing Approval Status")) {
                 Write-PSFMessage -Message "Importing update approval status." -Level Important
@@ -174,10 +168,15 @@ import <package> <log file>  <package>:          Path and filename of the packag
             }
         }
 
-
         if ($ImportDeclinedStatus) {
             if ($PSCmdlet.ShouldProcess("Importing declined status")) {
-
+                Write-PSFMessage -Message "Importing update declined status." -Level Important
+                try {
+                    Import-DeclinedStatus
+                }
+                catch {
+                    Stop-PSFFunction
+                }
             }
         }
 

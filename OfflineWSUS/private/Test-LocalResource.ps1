@@ -6,10 +6,10 @@ function Test-LocalResource {
         [string]
         $ComputerName
     )
-    
+
     begin {
     }
-    
+
     process {
         if ($ComputerName -eq $env:COMPUTERNAME -or $ComputerName -like "localhost") {
             $true
@@ -18,7 +18,7 @@ function Test-LocalResource {
             $false
         }
     }
-    
+
     end {
     }
 }

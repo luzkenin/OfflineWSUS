@@ -7,7 +7,7 @@ function Export-WSUSUpdates {
     Exports update metadata and binaries from a server to a folder. 
     This will allow you to synchronize the destination WSUS server without using a network connection.
     
-    See https://docs.microsoft.com/de-de/security-updates/windowsupdateservices/18127395 for more information.
+    See https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395 for more information.
 
     .PARAMETER ComputerName
         The target computer that will perform the import. Defaults to localhost.
@@ -32,23 +32,27 @@ function Export-WSUSUpdates {
         [Parameter()]
         [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter(Mandatory)]
-        [string]$Destination,
+        [system.IO.fileinfo]$Destination,
         # Parameter help description
         [Parameter()]
         [switch]
-        $ExportApprovalStatus
+        $ExportApprovalStatus,
+        # Parameter help description
+        [Parameter()]
+        [switch]
+        $ExportDeclinedStatus
     )
 
     begin {
     }
 
     process {
-        $service = Get-Service -ComputerName $ComputerName -name "WsusService" -ErrorAction SilentlyContinue
-        $exportdate = get-date -uFormat %m%d%y
-        $exportlog = "$exportdate.log"
-        $exportzip = "$exportdate.xml.gz"
-        $finallog = "$Destination\$exportlog"
-        $finalzip = "$Destination\$exportzip"
+        $Service = Get-Service -ComputerName $ComputerName -name "WsusService" -ErrorAction SilentlyContinue
+        $ExportDate = get-date -uFormat %m%d%y
+        $ExportLog = "$ExportDate.log"
+        $ExportZip = "$ExportDate.xml.gz"
+        $FinalLog = "$Destination\$ExportLog"
+        $FinalZip = "$Destination\$ExportZip"
         $FileInfo = Get-ChildItem -Path $WSUSContent -Recurse
 
         if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
@@ -58,29 +62,29 @@ function Export-WSUSUpdates {
         }
         #export
         Write-PSFMessage -Message "Starting export" -Level Important
-        if ($service.Status -ne "Stopped") {
-            Write-PSFMessage -Message "Stopping $($service.DisplayName) service on $computername" -Level Important
-            $service.Stop()
-            $service.WaitForStatus('Stopped', '00:00:20')
-            if ($service.Status -eq "Stopped") {
-                Write-PSFMessage -Message "$($service.DisplayName) is now $($service.Status)" -Level Important
+        if ($Service.Status -ne "Stopped") {
+            Write-PSFMessage -Message "Stopping $($Service.DisplayName) Service on $computername" -Level Important
+            $Service.Stop()
+            $Service.WaitForStatus('Stopped', '00:00:20')
+            if ($Service.Status -eq "Stopped") {
+                Write-PSFMessage -Message "$($Service.DisplayName) is now $($Service.Status)" -Level Important
             }
             else {
-                Stop-PSFFunction -Message "Could not stop $($service.DisplayName)" -ErrorRecord $_
-                $Result = "Could not stop $($service.DisplayName)"
+                Stop-PSFFunction -Message "Could not stop $($Service.DisplayName)" -ErrorRecord $_
+                $Result = "Could not stop $($Service.DisplayName)"
             }
         }
         try {
-            Export-PSWSUSMetaData -FileName $finalzip -LogName $finallog -ErrorAction stop
+            Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
         }
         catch {
             Stop-PSFFunction -Message "Could not export metadata" -ErrorRecord $_
             $Result = "Export failed"
         }
-        if ($service.Status -ne "Running") {
-            Write-PSFMessage -Message "Starting $($service.DisplayName) service on $computername" -Level Important
-            $service.Start()
-            $service.WaitForStatus('Running', '00:00:20')
+        if ($Service.Status -ne "Running") {
+            Write-PSFMessage -Message "Starting $($Service.DisplayName) Service on $computername" -Level Important
+            $Service.Start()
+            $Service.WaitForStatus('Running', '00:00:20')
         }
 
         if ($WSUSContent) {
