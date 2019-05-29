@@ -21,7 +21,7 @@
     # DotNetFrameworkVersion = ''
     # CLRVersion = ''
     # ProcessorArchitecture = ''
-    RequiredModules   = @("PoshWSUS")
+    RequiredModules   = @("PoshWSUS", "PSFramework")
     # RequiredAssemblies = @()
     # ScriptsToProcess = @()
     # TypesToProcess = @()
@@ -32,9 +32,9 @@
     # FileList = @()
     PrivateData       = @{
         PSData = @{
-            # Tags = @()
-            # LicenseUri = ''
-            # ProjectUri = ''
+            Tags       = @("WSUS")
+            LicenseUri = 'https://github.com/luzkenin/OfflineWSUS/blob/master/LICENSE'
+            ProjectUri = 'https://github.com/luzkenin/OfflineWSUS'
             # IconUri = ''
             # ReleaseNotes = ''
         }
