@@ -26,6 +26,7 @@ function Import-WSUSUpdates {
 
     .LINK
     https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395
+    https://docs.microsoft.com/de-de/security-updates/windowsupdateservices/18127442
 
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
@@ -48,7 +49,11 @@ function Import-WSUSUpdates {
         $ImportApprovalStatus,
         [Parameter()]
         [switch]
-        $ImportDeclinedStatus
+        $ImportDeclinedStatus,
+        # Parameter help description
+        [Parameter()]
+        [switch]
+        $FirstRun
     )
 
     begin {

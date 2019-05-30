@@ -3,8 +3,7 @@ function Export-ApprovalStatus {
     param (
         # Parameter help description
         [Parameter(Mandatory)]
-        [System.IO.FileInfo]
-        $Path
+        $Destination
     )
 
     begin {
@@ -12,7 +11,8 @@ function Export-ApprovalStatus {
 
     process {
         try {
-            Get-PSWSUSUpdateApproval | Export-Csv -Path "$Path\ApprovalStatus.csv" -NoTypeInformation
+            $ApprovalStatus = Get-PSWSUSUpdateApproval
+            $ApprovalStatus | Export-Csv -Path $Destination -NoTypeInformation
         }
         catch {
             Stop-PSFFunction -Message "Failure" -EnableException $true -ErrorRecord $_

@@ -1,22 +1,23 @@
 function Export-WSUSUpdates {
     <#
     .SYNOPSIS
-    Exports WSUS update metadata and binaries from a server.
+        Exports WSUS update metadata and binaries from a server.
 
     .DESCRIPTION
-    Exports update metadata and binaries from a server to a folder. 
-    This will allow you to synchronize the destination WSUS server without using a network connection.
-    
-    See https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395 for more information.
+        Exports update metadata and binaries from a server to a folder.
+        This will allow you to synchronize the destination WSUS server without using a network connection.
+
+        See https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395 for more information.
 
     .PARAMETER ComputerName
         The target computer that will perform the import. Defaults to localhost.
 
-    .PARAMETER WSUSContent
-    Location of the WSUSContent folder.
-
     .PARAMETER Destination
-    Location of where the files will go.
+        Location of where the files will go.
+
+    .PARAMETER ExportApprovalStatus
+
+    .PARAMETER ExportDeclinedStatus
 
     .INPUTS
 
@@ -32,7 +33,8 @@ function Export-WSUSUpdates {
         [Parameter()]
         [string]$ComputerName = $env:COMPUTERNAME,
         [Parameter(Mandatory)]
-        [system.IO.fileinfo]$Destination,
+        [ValidateScript( { Test-Path -Path $_ })]
+        [string]$Destination,
         # Parameter help description
         [Parameter()]
         [switch]
@@ -47,16 +49,19 @@ function Export-WSUSUpdates {
     }
 
     process {
+        $WSUSSetup = Get-WSUSSetupInfo -ComputerName $ComputerName
         $Service = Get-Service -ComputerName $ComputerName -name "WsusService" -ErrorAction SilentlyContinue
-        $ExportDate = get-date -uFormat %m%d%y
+        [string]$ExportDate = get-date -uFormat %m%d%y
         $ExportLog = "$ExportDate.log"
         $ExportZip = "$ExportDate.xml.gz"
         $FinalLog = "$Destination\$ExportLog"
         $FinalZip = "$Destination\$ExportZip"
-        $FileInfo = Get-ChildItem -Path $WSUSContent -Recurse
+        [string]$FinalApprovalCSV = $Destination + "\" + ($ExportDate + "ApprovalStatus.csv")
+        [string]$FinalDeclinedCSV = $Destination + "\" + ($ExportDate + "DeclinedStatus.csv")
+        [array]$FileInfo = Get-ChildItem -Path $WSUSContent -Recurse
 
         if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
-            # Module is imported automatically because of psd1. 
+            # Module is imported automatically because of psd1.
             Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server"
             return
         }
@@ -75,22 +80,17 @@ function Export-WSUSUpdates {
             }
         }
         try {
-            Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
+            #Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
         }
         catch {
             Stop-PSFFunction -Message "Could not export metadata" -ErrorRecord $_
             $Result = "Export failed"
         }
-        if ($Service.Status -ne "Running") {
-            Write-PSFMessage -Message "Starting $($Service.DisplayName) Service on $computername" -Level Important
-            $Service.Start()
-            $Service.WaitForStatus('Running', '00:00:20')
-        }
 
-        if ($WSUSContent) {
+        if ($WSUSSetup.WSUSContentPath | Test-Path) {
             Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
             try {
-                Copy-Item -Path $WSUSContent -Destination $Destination -Recurse -ErrorAction Stop
+                Copy-Item -Path $WSUSSetup.WSUSContentPath -Destination $Destination -Recurse -ErrorAction Stop
             }
             catch {
                 Stop-PSFFunction -Message "Could not copy all files" -ErrorRecord $_
@@ -98,17 +98,30 @@ function Export-WSUSUpdates {
                 return
             }
         }
-        if ($ExportApprovalStatus) {
-            #Get-PSWSUSUpdateApproval | Export-Csv -Path $Destination\ApprovalStatus.csv -NoTypeInformation
+        if ($ExportApprovalStatus.IsPresent) {
+            Write-PSFMessage -Message "Exporting approval statuses" -Level Important
+            Export-ApprovalStatus -Destination $FinalApprovalCSV
         }
+        if ($ExportDeclinedStatus.IsPresent) {
+            Write-PSFMessage -Message "Exporting declined statuses" -Level Important
+            Export-DeclinedStatus -Destination $FinalDeclinedCSV
+        }
+
+        if ($Service.Status -ne "Running") {
+            Write-PSFMessage -Message "Starting $($Service.DisplayName) Service on $computername" -Level Important
+            $Service.Start()
+            $Service.WaitForStatus('Running', '00:00:20')
+        }
+
         [pscustomobject]@{
-            ComputerName = $ComputerName
-            Action       = "Export"
-            Result       = $Result # can you add record numbers or any other useful info?
-            TotalSize    = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB) + "GB"
-            FileCount    = $FileInfo.count
-            Destination  = $Destination
-            Source       = $WSUSContent
+            ComputerName    = $ComputerName
+            Action          = "Export"
+            Result          = $Result # can you add record numbers or any other useful info?
+            TotalSize       = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB) + "GB"
+            FileCount       = $FileInfo.count
+            DeclinedUpdates = $Declined.Count
+            Destination     = $Destination
+            Source          = $WSUSContent
 
         }
     }

@@ -3,16 +3,23 @@ function Export-DeclinedStatus {
     param (
         # Parameter help description
         [Parameter(Mandatory)]
-        [System.IO.FileInfo]
-        $Path
+        $Destination
     )
-    
+
     begin {
     }
-    
+
     process {
+        try {
+            $Declined = Get-PSWSUSUpdate | where IsDeclined -eq $true
+            $Declined | Export-Csv -Path $Destination -NoTypeInformation
+        }
+        catch {
+            Stop-PSFFunction -Message "Failure" -EnableException $true -ErrorRecord $_
+        }
+
     }
-    
+
     end {
     }
 }
