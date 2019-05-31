@@ -17,7 +17,9 @@ function Export-DeclinedStatus {
         catch {
             Stop-PSFFunction -Message "Failure" -EnableException $true -ErrorRecord $_
         }
-
+        [PSCustomObject]@{
+            DeclinedCount = $Declined.count
+        }
     }
 
     end {

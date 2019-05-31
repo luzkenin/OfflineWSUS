@@ -56,15 +56,18 @@ function Export-WSUSUpdates {
         $ExportZip = "$ExportDate.xml.gz"
         $FinalLog = "$Destination\$ExportLog"
         $FinalZip = "$Destination\$ExportZip"
+        $Exclude = Get-ChildItem -Path $Destination -recurse
         [string]$FinalApprovalCSV = $Destination + "\" + ($ExportDate + "ApprovalStatus.csv")
         [string]$FinalDeclinedCSV = $Destination + "\" + ($ExportDate + "DeclinedStatus.csv")
-        [array]$FileInfo = Get-ChildItem -Path $WSUSContent -Recurse
+        [array]$FileInfo = Get-ChildItem -Path $WSUSSetup.WSUSContentPath -Recurse
 
-        if (-not (Get-PSWSUSServer -WarningAction SilentlyContinue)) {
-            # Module is imported automatically because of psd1.
-            Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server"
-            return
+        try {
+            Get-PSWSUSServer | Out-Null
         }
+        catch {
+            Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server" -ErrorRecord $_
+        }
+
         #export
         Write-PSFMessage -Message "Starting export" -Level Important
         if ($Service.Status -ne "Stopped") {
@@ -80,7 +83,8 @@ function Export-WSUSUpdates {
             }
         }
         try {
-            #Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
+            Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
+            $result = "Success"
         }
         catch {
             Stop-PSFFunction -Message "Could not export metadata" -ErrorRecord $_
@@ -90,21 +94,14 @@ function Export-WSUSUpdates {
         if ($WSUSSetup.WSUSContentPath | Test-Path) {
             Write-PSFMessage -Message "Copying WSUSContent folder" -Level Important
             try {
-                Copy-Item -Path $WSUSSetup.WSUSContentPath -Destination $Destination -Recurse -ErrorAction Stop
+                Copy-Item -Path $WSUSSetup.WSUSContentPath -Destination $Destination -Recurse -Force -ErrorAction Stop
+                $Result = "Success"
             }
             catch {
                 Stop-PSFFunction -Message "Could not copy all files" -ErrorRecord $_
                 $Result = "Could not copy all files"
                 return
             }
-        }
-        if ($ExportApprovalStatus.IsPresent) {
-            Write-PSFMessage -Message "Exporting approval statuses" -Level Important
-            Export-ApprovalStatus -Destination $FinalApprovalCSV
-        }
-        if ($ExportDeclinedStatus.IsPresent) {
-            Write-PSFMessage -Message "Exporting declined statuses" -Level Important
-            Export-DeclinedStatus -Destination $FinalDeclinedCSV
         }
 
         if ($Service.Status -ne "Running") {
@@ -113,16 +110,37 @@ function Export-WSUSUpdates {
             $Service.WaitForStatus('Running', '00:00:20')
         }
 
+        if ($ExportApprovalStatus.IsPresent) {
+            Write-PSFMessage -Message "Exporting approval statuses" -Level Important
+            try {
+                Export-ApprovalStatus -Destination $FinalApprovalCSV
+                $result = "Success"
+            }
+            catch {
+                Stop-PSFFunction
+            }
+        }
+        if ($ExportDeclinedStatus.IsPresent) {
+            Write-PSFMessage -Message "Exporting declined statuses" -Level Important
+            try {
+                $Declined = Export-DeclinedStatus -Destination $FinalDeclinedCSV
+                $Result = "Success"
+            }
+            catch {
+                Stop-PSFFunction
+            }
+        }
+
+
         [pscustomobject]@{
             ComputerName    = $ComputerName
             Action          = "Export"
-            Result          = $Result # can you add record numbers or any other useful info?
-            TotalSize       = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB) + "GB"
-            FileCount       = $FileInfo.count
-            DeclinedUpdates = $Declined.Count
+            Source          = $WSUSSetup.WSUSContentPath
             Destination     = $Destination
-            Source          = $WSUSContent
-
+            TotalSize       = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
+            FileCount       = $FileInfo.count
+            DeclinedUpdates = $Declined.DeclinedCount
+            Result          = $Result # can you add record numbers or any other useful info?
         }
     }
 }

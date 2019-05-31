@@ -3,6 +3,8 @@ function Export-ApprovalStatus {
     param (
         # Parameter help description
         [Parameter(Mandatory)]
+        [validatepattern("\.[csv]+$")]
+        [string]
         $Destination
     )
 
