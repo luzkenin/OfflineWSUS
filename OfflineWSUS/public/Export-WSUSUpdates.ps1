@@ -82,8 +82,9 @@ function Export-WSUSUpdates {
                 $Result = "Could not stop $($Service.DisplayName)"
             }
         }
+        Write-PSFMessage -Message "Starting Metadata export" -Level Important
         try {
-            Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
+            $CatchExport = Export-PSWSUSMetaData -FileName $FinalZip -LogName $FinalLog -ErrorAction stop
             $result = "Success"
         }
         catch {
@@ -139,8 +140,12 @@ function Export-WSUSUpdates {
             Destination     = $Destination
             TotalSize       = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
             FileCount       = $FileInfo.count
+            #Approved
+            #NotApproved
+            #
             DeclinedUpdates = $Declined.DeclinedCount
             Result          = $Result # can you add record numbers or any other useful info?
+            #ElapsedTime = $Elapsed
         }
     }
 }
