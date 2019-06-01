@@ -46,9 +46,6 @@ function Export-WSUSUpdates {
     )
 
     begin {
-    }
-
-    process {
         $WSUSSetup = Get-WSUSSetupInfo -ComputerName $ComputerName
         $Service = Get-Service -ComputerName $ComputerName -name "WsusService" -ErrorAction SilentlyContinue
         [string]$ExportDate = get-date -uFormat %m%d%y
@@ -67,6 +64,9 @@ function Export-WSUSUpdates {
         catch {
             Stop-PSFFunction -Message "Use Connect-PSWSUSServer to establish connection with your Windows Update Server" -ErrorRecord $_
         }
+    }
+
+    process {
 
         #export
         Write-PSFMessage -Message "Starting export" -Level Important
