@@ -19,6 +19,11 @@ function Export-ApprovalStatus {
         catch {
             Stop-PSFFunction -Message "Failure" -EnableException $true -ErrorRecord $_
         }
+        [PSCustomObject]@{
+            UpdateCount      = $ApprovalStatus.count
+            InstallCount     = $ApprovalStatus | where action -eq "Install"
+            NotApprovedCount = $ApprovalStatus | where action -eq "Install"
+        }
     }
 
     end {
