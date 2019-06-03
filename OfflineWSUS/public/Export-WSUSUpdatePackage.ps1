@@ -140,9 +140,8 @@ function Export-WSUSUpdatePackage {
             Destination     = $Destination
             TotalSize       = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
             FileCount       = $FileInfo.count
-            #Approved
-            #NotApproved
-            #
+            Approved        = $ExportApprovalStatus.InstallCount
+            NotApproved     = $ExportApprovalStatus.NotApproved
             DeclinedUpdates = $Declined.DeclinedCount
             Result          = $Result # can you add record numbers or any other useful info?
             #ElapsedTime = $Elapsed
