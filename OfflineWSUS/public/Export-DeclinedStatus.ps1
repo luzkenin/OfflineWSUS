@@ -3,6 +3,8 @@ function Export-DeclinedStatus {
     param (
         # Parameter help description
         [Parameter(Mandatory)]
+        [validatepattern("\.[csv]+$")]
+        [string]
         $Destination
     )
 
@@ -19,6 +21,7 @@ function Export-DeclinedStatus {
         }
         [PSCustomObject]@{
             DeclinedCount = $Declined.count
+            Destination   = $Destination
         }
     }
 

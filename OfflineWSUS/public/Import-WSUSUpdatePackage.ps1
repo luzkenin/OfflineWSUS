@@ -58,9 +58,6 @@ function Import-WSUSUpdatePackage {
 
     begin {
         $scriptelapsed = [System.Diagnostics.Stopwatch]::StartNew()
-    }
-
-    process {
         #Getting WSUS info
         $WSUSSetup = Get-WSUSSetupInfo -ComputerName $ComputerName
         $PathFileCount = Get-ChildItem -Path $Path -File -Recurse | Measure-Object | % { $_.Count }
@@ -71,7 +68,9 @@ function Import-WSUSUpdatePackage {
             "$Xml",
             "$LogFile"
         )
+    }
 
+    process {
         #Testing paths
         if (($WSUSSetup.WSUSUtilPathExists -eq $false) -or ($WSUSSetup.WSUSContentPathExists -eq $false)) {
             Stop-PSFFunction -Message "Paths do not exist" -ErrorRecord $_
