@@ -22,7 +22,7 @@ function Export-ApprovalStatus {
         [PSCustomObject]@{
             UpdateCount      = $ApprovalStatus.count
             InstallCount     = $ApprovalStatus | where action -eq "Install"
-            NotApprovedCount = $ApprovalStatus | where action -eq "Install"
+            NotApprovedCount = $ApprovalStatus | where action -eq "NotApproved"
         }
     }
 
