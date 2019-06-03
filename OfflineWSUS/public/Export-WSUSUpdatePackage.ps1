@@ -134,16 +134,16 @@ function Export-WSUSUpdatePackage {
 
 
         [pscustomobject]@{
-            ComputerName    = $ComputerName
-            Action          = "Export"
-            Source          = $WSUSSetup.WSUSContentPath
-            Destination     = $Destination
-            TotalSize       = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
-            FileCount       = $FileInfo.count
-            Approved        = $ExportApprovalStatus.InstallCount
-            NotApproved     = $ExportApprovalStatus.NotApproved
-            DeclinedUpdates = $Declined.DeclinedCount
-            Result          = $Result # can you add record numbers or any other useful info?
+            ComputerName        = $ComputerName
+            Action              = "Export"
+            Source              = $WSUSSetup.WSUSContentPath
+            Destination         = $Destination
+            TotalSize           = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
+            FileCount           = $FileInfo.count
+            ApprovedCount       = $ExportApprovalStatus.InstallCount
+            NotApprovedCount    = $ExportApprovalStatus.NotApprovedCount
+            DeclinedUpdateCount = $Declined.DeclinedCount
+            Result              = $Result # can you add record numbers or any other useful info?
             #ElapsedTime = $Elapsed
         }
     }
