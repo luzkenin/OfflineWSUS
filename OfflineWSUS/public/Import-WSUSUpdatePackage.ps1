@@ -39,11 +39,21 @@ function Import-WSUSUpdatePackage {
         [System.IO.FileInfo]
         $Path,
         [Parameter()]
+        [ValidateScript( { Test-Path -Path $_ })]
         [string]
         $Xml = (Get-ChildItem -Path $Path | where name -like "*.xml.gz" | select -ExpandProperty FullName),
         [Parameter()]
+        [ValidateScript( { Test-Path -Path $_ })]
         [string]
         $LogFile = (Get-ChildItem -Path $Path | where name -like "*.log" | select -ExpandProperty FullName),
+        [Parameter()]
+        [ValidateScript( { Test-Path -Path $_ })]
+        [string]
+        $DeclineStatusPath = (Get-ChildItem -Path $Path | where name -like "*ApprovalStatus.csv" | select -ExpandProperty FullName),
+        [Parameter()]
+        [ValidateScript( { Test-Path -Path $_ })]
+        [string]
+        $ApprovalStatusPath = (Get-ChildItem -Path $Path | where name -like "*DeclinedStatus.csv" | select -ExpandProperty FullName),
         [Parameter()]
         [switch]
         $ImportApprovalStatus,
@@ -164,7 +174,7 @@ function Import-WSUSUpdatePackage {
             if ($PSCmdlet.ShouldProcess("Importing Approval Status")) {
                 Write-PSFMessage -Message "Importing update approval status." -Level Important
                 try {
-                    Import-ApprovalStatus
+                    Import-ApprovalStatus -Path $ApprovalStatusPath
                 }
                 catch {
                     Stop-PSFFunction
@@ -176,7 +186,7 @@ function Import-WSUSUpdatePackage {
             if ($PSCmdlet.ShouldProcess("Importing declined status")) {
                 Write-PSFMessage -Message "Importing update declined status." -Level Important
                 try {
-                    Import-DeclinedStatus
+                    Import-DeclinedStatus -Path $DeclineStatusPath
                 }
                 catch {
                     Stop-PSFFunction
