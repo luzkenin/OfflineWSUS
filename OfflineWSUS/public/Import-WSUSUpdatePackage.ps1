@@ -1,4 +1,4 @@
-function Import-WSUSUpdates {
+function Import-WSUSUpdatePackage {
     <#
     .SYNOPSIS
     Imports WSUS update metadata, binaries, and approval status to a server.

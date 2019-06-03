@@ -1,4 +1,4 @@
-function Export-WSUSUpdates {
+function Export-WSUSUpdatePackage {
     <#
     .SYNOPSIS
         Exports WSUS update metadata and binaries from a server.
