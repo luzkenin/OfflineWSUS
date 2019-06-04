@@ -11,4 +11,5 @@
         Version = '4.1.0'
     }
     PoshWSUS         = '2.3.1.6'
+    PSFramework      = '1.0.19'
 }
