@@ -1,5 +1,5 @@
-@{ 
-    PSDependOptions  = @{ 
+@{
+    PSDependOptions  = @{
         Target    = '$DependencyPath/_build-cache/'
         AddToPath = $true
     }
@@ -10,4 +10,5 @@
     Pester           = @{
         Version = '4.1.0'
     }
+    PoshWSUS         = '2.3.1.6'
 }
