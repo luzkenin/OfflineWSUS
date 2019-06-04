@@ -16,16 +16,9 @@ function Export-WSUSUpdatePackage {
         Location of where the files will go.
 
     .PARAMETER ExportApprovalStatus
-
+        Switch to export approval status
     .PARAMETER ExportDeclinedStatus
-
-    .INPUTS
-
-    .OUTPUTS
-
-    .EXAMPLE
-
-    .LINK
+        Switch to export declined status
 
     #>
     [CmdletBinding()]

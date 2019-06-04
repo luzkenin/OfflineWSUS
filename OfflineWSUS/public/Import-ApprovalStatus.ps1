@@ -1,4 +1,21 @@
 function Import-ApprovalStatus {
+    <#
+    .SYNOPSIS
+    Imports approval status
+
+    .DESCRIPTION
+    Imports approval status from csv
+
+    .PARAMETER Path
+    Path to csv
+
+    .EXAMPLE
+    Import-ApprovalStatus -Path C:\temp\csv.csv
+
+    .NOTES
+    General notes
+    #>
+
     [CmdletBinding(SupportsShouldProcess)]
     param (
         # Parameter help description

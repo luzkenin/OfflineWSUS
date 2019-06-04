@@ -1,4 +1,19 @@
 function Export-ApprovalStatus {
+    <#
+    .SYNOPSIS
+    Exports update approval status
+
+    .DESCRIPTION
+    Exports update approval status using PoshWSUS command 'Get-PSWSUSUpdateApproval' and saves it as csv.
+
+    .PARAMETER Destination
+    Destination of output csv
+
+    .EXAMPLE
+    Export-ApprovalStatus -Destination C;\temp\appstatus.csv
+
+    #>
+
     [CmdletBinding()]
     param (
         # Parameter help description

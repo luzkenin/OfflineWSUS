@@ -1,4 +1,18 @@
 function Export-DeclinedStatus {
+    <#
+    .SYNOPSIS
+    Exports update declined status
+
+    .DESCRIPTION
+    Exports update declined status using PoshWSUS command 'Get-PSWSUSUpdate' and saves it as csv.
+
+    .PARAMETER Destination
+    Destination of output csv
+
+    .EXAMPLE
+    Export-DeclinedStatus -Destination C:\temp\appstatus.csv
+
+    #>
     [CmdletBinding()]
     param (
         # Parameter help description

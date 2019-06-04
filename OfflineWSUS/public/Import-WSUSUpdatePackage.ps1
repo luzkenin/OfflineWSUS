@@ -2,33 +2,47 @@ function Import-WSUSUpdatePackage {
     <#
     .SYNOPSIS
     Imports WSUS update metadata, binaries, and approval status to a server.
-
+    
     .DESCRIPTION
     Imports update metadata to a server from an export package file created on another WSUS server.
     This synchronizes the destination WSUS server without using a network connection.
 
     See https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395 for more information.
-
+    
     .PARAMETER ComputerName
-        The target computer that will perform the import. Defaults to localhost.
-
-    .PARAMETER LogFile
-         The path and file name of the log file.
-
+    The target computer that will perform the import. Defaults to localhost.
+    
+    .PARAMETER Path
+    Path to WSUS export
+    
     .PARAMETER Xml
-        Path to the import approval metadata Xml.
-
-    .INPUTS
-
-    .OUTPUTS
-
+    Path to the import approval metadata Xml.
+    
+    .PARAMETER LogFile
+    The path and file name of the log file.
+    
+    .PARAMETER DeclineStatusPath
+    Path to csv for declined status. Will try to find it automatically
+    
+    .PARAMETER ApprovalStatusPath
+    Path to csv for approval status. Will try to find it automatically
+    
+    .PARAMETER ImportApprovalStatus
+    Switch to import approvals
+    
+    .PARAMETER ImportDeclinedStatus
+    Switch to import declined status
+    
+    .PARAMETER FirstRun
+    not sure
+    
     .EXAMPLE
-
-    .LINK
-    https://docs.microsoft.com/de-de/security-updates/windowsupdateServices/18127395
-    https://docs.microsoft.com/de-de/security-updates/windowsupdateservices/18127442
-
+    Import-WSUSUpdatePackage
+    
+    .NOTES
+    General notes
     #>
+    
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
     param (
         [Parameter()]

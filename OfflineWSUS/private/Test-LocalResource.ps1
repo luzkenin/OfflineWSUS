@@ -2,6 +2,7 @@ function Test-LocalResource {
     [CmdletBinding()]
     param (
         # Parameter help description
+        [OutputType([Bool])]
         [Parameter(Mandatory)]
         [string]
         $ComputerName
