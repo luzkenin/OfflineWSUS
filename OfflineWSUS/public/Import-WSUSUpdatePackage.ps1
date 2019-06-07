@@ -152,13 +152,6 @@ function Import-WSUSUpdatePackage {
                 if ($WSUSUtilout -like "*success*") {
                     Write-PSFMessage -Message "Import was successful" -Level Important
                 }
-                <#elseif ($WSUSUtilout -notlike "*success*") {
-                    Stop-PSFFunction -Message "Metadata import was unsuccessful" -ErrorRecord $_
-                }
-                else {
-                    Stop-PSFFunction -Message "Could not determine output of import" ###############################################
-                    return
-                }#>
             }
             catch {
                 Stop-PSFFunction -Message "Could not import metadata" -ErrorRecord $_ -EnableException $true
@@ -188,7 +181,7 @@ function Import-WSUSUpdatePackage {
             if ($PSCmdlet.ShouldProcess("Importing Approval Status")) {
                 Write-PSFMessage -Message "Importing update approval status." -Level Important
                 try {
-                    Import-ApprovalStatus -Path $ApprovalStatusPath
+                    $ExportApprovalStatus = Import-ApprovalStatus -Path $ApprovalStatusPath
                 }
                 catch {
                     Stop-PSFFunction
@@ -200,7 +193,7 @@ function Import-WSUSUpdatePackage {
             if ($PSCmdlet.ShouldProcess("Importing declined status")) {
                 Write-PSFMessage -Message "Importing update declined status." -Level Important
                 try {
-                    Import-DeclinedStatus -Path $DeclineStatusPath
+                    $Declined = Import-DeclinedStatus -Path $DeclineStatusPath
                 }
                 catch {
                     Stop-PSFFunction
@@ -209,12 +202,18 @@ function Import-WSUSUpdatePackage {
         }
 
         [pscustomobject]@{
-            ComputerName    = $ComputerName
-            Action          = "Import"
-            Result          = "Success" # can you add record numbers or any other useful info?############################################################################################################################
-            FileCount       = $PathFileCount############################################################################################################################
-            ElapsedTIme     = [math]::Round($scriptelapsed.Elapsed.TotalSeconds, 2)
-            ObjectsImported = $null
+            ComputerName        = $ComputerName
+            Action              = "Import"
+            Source              = $Path
+            Destination         = $WSUSSetup.WSUSContentPath
+            Result              = "Success" # can you add record numbers or any other useful info?############################################################################################################################
+
+            #TotalSize           = (($FileInfo | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum / 1GB)
+            FileCount           = $PathFileCount
+            ApprovedCount       = $ExportApprovalStatus.InstallCount
+            NotApprovedCount    = $ExportApprovalStatus.NotApprovedCount
+            DeclinedUpdateCount = $Declined.DeclinedCount
+            ElapsedTIme         = [math]::Round($scriptelapsed.Elapsed.TotalSeconds, 2)
         }
     }
     End {

@@ -43,6 +43,11 @@ function Import-ApprovalStatus {
                     Stop-PSFFunction -Message "Could not import approval status for $($("KB"+$Update.UpdateKB))" -Continue -ErrorRecord $_
                 }
             }
+            [PSCustomObject]@{
+                UpdateCount      = $ApprovalStatus.count
+                InstallCount     = $ApprovalStatus | where action -eq "Install"
+                NotApprovedCount = $ApprovalStatus | where action -eq "NotApproved"
+            }
         }
     }
 

@@ -42,6 +42,9 @@ function Import-DeclinedStatus {
                     Stop-PSFFunction -Message "Could not import declined status for $($("KB"+$Update.UpdateKB))" -Continue -ErrorRecord $_
                 }
             }
+            [PSCustomObject]@{
+                DeclinedCount = $DeclinedStatus.count
+            }
         }
     }
 
