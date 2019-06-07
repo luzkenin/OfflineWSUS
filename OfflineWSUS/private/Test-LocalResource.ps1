@@ -1,8 +1,8 @@
 function Test-LocalResource {
     [CmdletBinding()]
+    [OutputType([System.Boolean])]
     param (
         # Parameter help description
-        [OutputType([Bool])]
         [Parameter(Mandatory)]
         [string]
         $ComputerName
