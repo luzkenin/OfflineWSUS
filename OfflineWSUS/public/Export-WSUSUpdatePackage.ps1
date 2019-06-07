@@ -46,7 +46,7 @@ function Export-WSUSUpdatePackage {
         $ExportZip = "$ExportDate.xml.gz"
         $FinalLog = "$Destination\$ExportLog"
         $FinalZip = "$Destination\$ExportZip"
-        $Exclude = Get-ChildItem -Path $Destination -recurse
+        #$Exclude = Get-ChildItem -Path $Destination -recurse
         [string]$FinalApprovalCSV = $Destination + "\" + ($ExportDate + "ApprovalStatus.csv")
         [string]$FinalDeclinedCSV = $Destination + "\" + ($ExportDate + "DeclinedStatus.csv")
         [array]$FileInfo = Get-ChildItem -Path $WSUSSetup.WSUSContentPath -Recurse
@@ -139,5 +139,8 @@ function Export-WSUSUpdatePackage {
             Result              = $Result # can you add record numbers or any other useful info?
             #ElapsedTime = $Elapsed
         }
+    }
+    end {
+        $CatchExport | Out-Null
     }
 }
